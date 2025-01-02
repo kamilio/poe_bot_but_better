@@ -6,24 +6,24 @@ Sample bot that shows the query sent to the bot.
 
 from __future__ import annotations
 
-from typing import AsyncIterable
+from typing import AsyncIterable, List
 
 import fastapi_poe as fp
 from devtools import PrettyFormat
 from modal import App, Image, asgi_app
 
+from poe_bot_but_better.decorator import poe_bot_but_better
+
 pformat = PrettyFormat(width=85)
 
-
-class LogBot(fp.PoeBot):
+@poe_bot_but_better
+class LogBot:
     async def get_response(
-        self, request: fp.QueryRequest
+        self, messages: List[fp.ProtocolMessage]
     ) -> AsyncIterable[fp.PartialResponse]:
-        request.access_key = "redacted"
-        request.api_key = "redacted"
-        yield fp.PartialResponse(text="```python\n" + pformat(request) + "\n```")
+        yield fp.PartialResponse(text="```python\n" + pformat(messages) + "\n```")
 
-    async def get_settings(self, setting: fp.SettingsRequest) -> fp.SettingsResponse:
+    async def get_settings(self) -> fp.SettingsResponse:
         return fp.SettingsResponse(
             allow_attachments=True, enable_image_comprehension=True
         )

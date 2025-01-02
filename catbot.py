@@ -10,19 +10,20 @@ of all the protocol has to offer.
 from __future__ import annotations
 
 import asyncio
-from typing import AsyncIterable
+from typing import AsyncIterable, Literal
 
 import fastapi_poe as fp
 from modal import App, Image, asgi_app
+from poe_bot_but_better import poe_bot_but_better
 
-
-class CatBot(fp.PoeBot):
+@poe_bot_but_better
+class CatBot:
     async def get_response(
-        self, request: fp.QueryRequest
-    ) -> AsyncIterable[fp.PartialResponse]:
+        self, messages: list[fp.ProtocolMessage]
+    ):
         """Return an async iterator of events to send to the user."""
-        last_message = request.query[-1].content.lower()
-        response_content_type = (
+        last_message = messages[-1].content.lower()
+        response_content_type: Literal["text/plain", "text/markdown"] = (
             "text/plain" if "plain" in last_message else "text/markdown"
         )
         yield fp.MetaResponse(
@@ -33,31 +34,31 @@ class CatBot(fp.PoeBot):
             suggested_replies="dog" not in last_message,
         )
         if "markdown" in last_message:
-            yield fp.PartialResponse(text="# Heading 1\n\n")
-            yield fp.PartialResponse(text="*Bold text* ")
-            yield fp.PartialResponse(text="**More bold text**\n")
-            yield fp.PartialResponse(text="\n")
-            yield fp.PartialResponse(text="A list:\n")
-            yield fp.PartialResponse(text="- Item 1\n")
-            yield fp.PartialResponse(text="- Item 2\n")
-            yield fp.PartialResponse(text="- An item with [a link](https://poe.com)\n")
-            yield fp.PartialResponse(text="\n")
-            yield fp.PartialResponse(text="A table:\n\n")
-            yield fp.PartialResponse(text="| animal | cuteness |\n")
-            yield fp.PartialResponse(text="|--------|----------|\n")
-            yield fp.PartialResponse(text="| cat    | 10       |\n")
-            yield fp.PartialResponse(text="| dog    | 1        |\n")
-            yield fp.PartialResponse(text="\n")
+            yield "# Heading 1\n\n"
+            yield "*Bold text* "
+            yield "**More bold text**\n"
+            yield "\n"
+            yield "A list:\n"
+            yield "- Item 1\n"
+            yield "- Item 2\n"
+            yield "- An item with [a link](https://poe.com)\n"
+            yield "\n"
+            yield "A table:\n\n"
+            yield "| animal | cuteness |\n"
+            yield "|--------|----------|\n"
+            yield "| cat    | 10       |\n"
+            yield "| dog    | 1        |\n"
+            yield "\n"
         if "cardboard" in last_message:
-            yield fp.PartialResponse(text="crunch ")
-            yield fp.PartialResponse(text="crunch")
+            yield "crunch "
+            yield "crunch"
         elif (
             "kitchen" in last_message
             or "meal" in last_message
             or "food" in last_message
         ):
-            yield fp.PartialResponse(text="meow ")
-            yield fp.PartialResponse(text="meow")
+            yield "meow "
+            yield "meow"
             yield fp.PartialResponse(text="feed the cat", is_suggested_reply=True)
         elif "stranger" in last_message:
             for _ in range(10):
@@ -75,7 +76,7 @@ class CatBot(fp.PoeBot):
                 if "quickly" not in last_message:
                     await asyncio.sleep(1)
         else:
-            yield fp.PartialResponse(text="zzz")
+            yield "zzz"
 
     async def on_feedback(self, feedback_request: fp.ReportFeedbackRequest) -> None:
         """Called when we receive user feedback such as likes."""
@@ -84,7 +85,7 @@ class CatBot(fp.PoeBot):
             f"message {feedback_request.message_id}: {feedback_request.feedback_type}"
         )
 
-    async def get_settings(self, setting: fp.SettingsRequest) -> fp.SettingsResponse:
+    async def get_settings(self) -> fp.SettingsResponse:
         """Return the settings for this bot."""
         return fp.SettingsResponse(
             allow_user_context_clear=True, allow_attachments=True
