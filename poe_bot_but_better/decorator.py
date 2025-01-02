@@ -2,6 +2,8 @@ import asyncio
 from functools import wraps
 from typing import AsyncIterable, Callable, Union
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
+
+from poe_bot_but_better.client import create_get_final_response, create_stream_request
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
 
@@ -24,7 +26,11 @@ def poe_bot_but_better(cls):
                 "self": self,
                 "request": request,
                 "messages": request.query,
-                "bot_name": self.bot_name
+                "bot_name": self.bot_name,
+                
+                # client methods (maybe remove and use Depends instead)
+                "get_final_response": create_get_final_response(request),
+                "stream_request": create_stream_request(request),
             }
 
             dependencies = await solve_dependencies(func, context)
