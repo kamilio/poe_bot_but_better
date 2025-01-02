@@ -21,9 +21,9 @@ class LogBot:
     async def get_response(
         self, messages: List[fp.ProtocolMessage]
     ) -> AsyncIterable[fp.PartialResponse]:
-        yield fp.PartialResponse(text="```python\n" + pformat(messages) + "\n```")
+        yield "```python\n" + pformat(messages) + "\n```"
 
-    async def get_settings(self) -> fp.SettingsResponse:
+    def get_settings(self) -> fp.SettingsResponse:
         return fp.SettingsResponse(
             allow_attachments=True, enable_image_comprehension=True
         )
