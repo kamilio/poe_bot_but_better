@@ -29,7 +29,7 @@ Thanks to dependendency dependency this is easy to do. API users should not not 
 ## Make get_response more flexible - returning value, yield string
 Generators are advanced concept and it can be a bit intimidating to start with.
 
-From my experience, the bots are created are mashups of various LLMs, output is piped from one LLM to another, which makes streaming of responses impossible anyway. Therefore, we could add support where instead of yielding, we return final message. 
+From my experience, the bots I created, are mashups of various LLMs, output is piped from one LLM to another, which makes streaming of responses impossible anyway. Therefore, we could add support where instead of yielding, we return final message. 
 
 Another addition is ability to yield string (or return string).
 
