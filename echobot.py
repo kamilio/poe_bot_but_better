@@ -12,14 +12,14 @@ from typing import AsyncIterable
 
 import fastapi_poe as fp
 from modal import App, Image, asgi_app
+from poe_bot_but_better import poe_bot_but_better
 
-
-class EchoBot(fp.PoeBot):
-    async def get_response(
-        self, request: fp.QueryRequest
-    ) -> AsyncIterable[fp.PartialResponse]:
-        last_message = request.query[-1].content
-        yield fp.PartialResponse(text=last_message)
+@poe_bot_but_better
+class EchoBot:
+    def get_response(
+        self, messages: list[fp.ProtocolMessage]
+    ):
+        return messages[-1].content
 
 
 REQUIREMENTS = ["fastapi-poe==0.0.48"]
