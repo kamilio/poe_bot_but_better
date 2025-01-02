@@ -1,6 +1,6 @@
 import asyncio
 from functools import wraps
-from typing import Any, AsyncIterable, Callable, AsyncGenerator, Union
+from typing import AsyncIterable, Callable, Union
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
