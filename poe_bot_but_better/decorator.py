@@ -16,6 +16,13 @@ def normalize_response(response: Union[str, fp.PartialResponse]) -> fp.PartialRe
         raise ValueError("Response must be a string or PartialResponse. Got: {}".format(response))
 
 def poe_bot_but_better(cls):
+    # Check if PoeBot is already in the class's bases
+    if not issubclass(cls, fp.PoeBot):
+        # Create new class with PoeBot as parent if not already inherited
+        class EnhancedBot(fp.PoeBot, cls):
+            pass
+        cls = EnhancedBot
+    
     original_get_response = cls.get_response
     original_get_settings = cls.get_settings
     
