@@ -1,8 +1,17 @@
-from typing import Any, AsyncGenerator, Callable, List, Optional, Union
+from typing import Any, AsyncGenerator, Callable, Coroutine, List, Optional, Union
 import fastapi_poe as fp
 import httpx
 
 RequestOrMessage = Union[str, List[str], fp.QueryRequest, fp.ProtocolMessage, List[fp.ProtocolMessage]]
+StreamRequestCallable = Callable[
+    [RequestOrMessage, str],
+    AsyncGenerator[fp.PartialResponse, None]
+]
+
+GetFinalResponseCallable = Callable[
+    [RequestOrMessage, str], 
+    Coroutine[Any, Any, str]
+]
 
 def normalize_request(original_request: fp.QueryRequest, request_or_message: RequestOrMessage):
     def create_query_request(query):
@@ -38,17 +47,11 @@ def normalize_request(original_request: fp.QueryRequest, request_or_message: Req
     
     raise ValueError(f"Request must be a string, list of strings, QueryRequest, or list of ProtocolMessages. Got: {request_or_message}")
 
-def create_get_final_response(request: fp.QueryRequest):
+def create_get_final_response(request: fp.QueryRequest) -> GetFinalResponseCallable:
     api_key: str = request.access_key
     async def get_final_response(
-        request_or_message: fp.QueryRequest,
+        request_or_message: RequestOrMessage,
         bot_name: str,
-        *,
-        session: Optional[httpx.AsyncClient] = None,
-        on_error: Any = None,
-        num_tries: int = 2,
-        retry_sleep_time: float = 0.5,
-        base_url: str = "https://api.poe.com/bot/",
     ) -> str:
         # Apply any request modifications
         modified_request = normalize_request(request, request_or_message)
@@ -58,30 +61,17 @@ def create_get_final_response(request: fp.QueryRequest):
             request=modified_request,
             bot_name=bot_name,
             api_key=api_key,
-            session=session,
-            on_error=on_error,
-            num_tries=num_tries,
-            retry_sleep_time=retry_sleep_time,
-            base_url=base_url
         )
     
     return get_final_response
 
 
-def create_stream_request(request: fp.QueryRequest):
+def create_stream_request(request: fp.QueryRequest) -> StreamRequestCallable:
     api_key: str = request.access_key
     
     async def stream_request(
         request_or_message: RequestOrMessage,
         bot_name: str,
-        *,
-        tools: Optional[List[fp.ToolDefinition]] = None,
-        tool_executables: Optional[List[Callable]] = None,
-        session: Optional[httpx.AsyncClient] = None,
-        on_error: Any = None,
-        num_tries: int = 2,
-        retry_sleep_time: float = 0.5,
-        base_url: str = "https://api.poe.com/bot/",
     ) -> AsyncGenerator[fp.PartialResponse, None]:
         # Apply any request modifications
         modified_request = normalize_request(request, request_or_message)
@@ -91,13 +81,6 @@ def create_stream_request(request: fp.QueryRequest):
             request=modified_request,
             bot_name=bot_name,
             api_key=api_key,
-            tools=tools,
-            tool_executables=tool_executables,
-            session=session,
-            on_error=on_error,
-            num_tries=num_tries,
-            retry_sleep_time=retry_sleep_time,
-            base_url=base_url
         ):
             yield message
             

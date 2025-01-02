@@ -15,20 +15,18 @@ SYSTEM_PROMPT = """
 All your replies are Haikus.
 """.strip()
 
+from poe_bot_but_better import poe_bot_but_better, StreamRequestCallable
 
-class PromptBot(fp.PoeBot):
+@poe_bot_but_better
+class PromptBot:
     async def get_response(
-        self, request: fp.QueryRequest
+        self, messages: list[fp.ProtocolMessage], stream_request: StreamRequestCallable
     ) -> AsyncIterable[fp.PartialResponse]:
-        request.query = [
-            fp.ProtocolMessage(role="system", content=SYSTEM_PROMPT)
-        ] + request.query
-        async for msg in fp.stream_request(
-            request, "Claude-3-Haiku", request.access_key
-        ):
+        messages = [fp.ProtocolMessage(role="system", content=SYSTEM_PROMPT)] + messages
+        async for msg in stream_request(messages, "Claude-3-Haiku"):
             yield msg
 
-    async def get_settings(self, setting: fp.SettingsRequest) -> fp.SettingsResponse:
+    def get_settings(self) -> fp.SettingsResponse:
         return fp.SettingsResponse(server_bot_dependencies={"Claude-3-Haiku": 1})
 
 
