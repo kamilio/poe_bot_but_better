@@ -10,18 +10,19 @@ from typing import AsyncIterable
 
 import fastapi_poe as fp
 from modal import App, Image, asgi_app
+from poe_bot_but_better import poe_bot_but_better
 
-
-class GPT35TurboAllCapsBot(fp.PoeBot):
+@poe_bot_but_better
+class GPT35TurboAllCapsBot:
     async def get_response(
-        self, request: fp.QueryRequest
+        self, stream_request, messages,
     ) -> AsyncIterable[fp.PartialResponse]:
-        async for msg in fp.stream_request(
-            request, "GPT-3.5-Turbo", request.access_key
+        async for msg in stream_request(
+            messages, "GPT-3.5-Turbo"
         ):
-            yield msg.model_copy(update={"text": msg.text.upper()})
+            yield msg.text.upper()
 
-    async def get_settings(self, setting: fp.SettingsRequest) -> fp.SettingsResponse:
+    async def get_settings(self) -> fp.SettingsResponse:
         return fp.SettingsResponse(server_bot_dependencies={"GPT-3.5-Turbo": 1})
 
 
