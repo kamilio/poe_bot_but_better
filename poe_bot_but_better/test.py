@@ -23,13 +23,13 @@ class BotTestHelper:
                 yield fp.PartialResponse(text=response)
         return generator()
 
-    async def get_final_response(self, request_or_message, bot_name: str, **kwargs) -> str:
+    async def _get_final_response(self, request_or_message, bot_name: str, **kwargs) -> str:
         if bot_name not in self.responses:
             raise ValueError(f"Bot {bot_name} not mocked")
         self.mocked_bots[bot_name](request_or_message)
         return "".join(self.responses[bot_name])
 
-    async def stream_request(self, request_or_message, bot_name: str, **kwargs) -> AsyncGenerator[fp.PartialResponse, None]:
+    async def _stream_request(self, request_or_message, bot_name: str, **kwargs) -> AsyncGenerator[fp.PartialResponse, None]:
         if bot_name not in self.responses:
             raise ValueError(f"Bot {bot_name} not mocked")
         self.mocked_bots[bot_name](request_or_message)
@@ -51,8 +51,8 @@ class BotTestHelper:
         request = normalize_request(original_request, messages)
 
         bot.dependency_injection_context_override = {
-            "get_final_response": self.get_final_response,
-            "stream_request": self.stream_request,
+            "get_final_response": self._get_final_response,
+            "stream_request": self._stream_request,
         }
 
         response_parts = []
