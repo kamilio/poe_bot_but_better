@@ -20,19 +20,26 @@ async def solve_dependencies(
 ) -> Dict[str, Any]:
     context = context or {}
     params = {}
+    
+    # Handle bound methods by getting the underlying function
+    if inspect.ismethod(func):
+        func = func.__func__
+    
     signature = inspect.signature(func)
     hints = get_type_hints(func, include_extras=True)
     
     cache: Dict[Callable, Any] = {}
 
     async def resolve_dependency(param_name: str, param: inspect.Parameter) -> Any:
-        # Check if parameter is in context
+        # Skip self/cls parameters
+        if param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD and param_name in ('self', 'cls'):
+            return None
+
         if param_name in context:
             return context[param_name]
 
         annotation = hints.get(param_name, param.annotation)
         
-        # Handle Annotated types
         if get_origin(annotation) is Annotated:
             args = get_args(annotation)
             for arg in args:
@@ -52,7 +59,6 @@ async def solve_dependencies(
                         cache[dependency] = result
                     return result
 
-        # Handle direct Depends
         if isinstance(param.default, Depends):
             dependency = param.default.dependency
             if param.default.use_cache and dependency in cache:
@@ -69,16 +75,13 @@ async def solve_dependencies(
                 cache[dependency] = result
             return result
 
-        # Handle default values
         if param.default != inspect.Parameter.empty:
             return param.default
 
-        # Handle dataclass instantiation
         if (is_dataclass(annotation) and 
             annotation != inspect.Parameter.empty and 
-            isinstance(annotation, type)):  # ensure it's a class
+            isinstance(annotation, type)):
             
-            # Get signature from the class itself
             class_signature = inspect.signature(annotation)
             dep_params = await solve_dependencies(annotation, context)
             return annotation(**dep_params)
@@ -86,15 +89,20 @@ async def solve_dependencies(
         raise ValueError(f"Cannot resolve dependency for parameter {param_name}")
 
     # Resolve all dependencies concurrently
-    param_names = list(signature.parameters.keys())
-    resolved_values = await asyncio.gather(
-        *(resolve_dependency(name, signature.parameters[name]) for name in param_names)
+    resolved = await asyncio.gather(
+        *(resolve_dependency(name, param) 
+          for name, param in signature.parameters.items())
     )
     
-    params = dict(zip(param_names, resolved_values))
+    # Filter out None values (from self/cls parameters)
+    params = {
+        name: value 
+        for name, value, param in zip(signature.parameters.keys(), resolved, signature.parameters.values())
+        if not (param.kind == inspect.Parameter.POSITIONAL_OR_KEYWORD and name in ('self', 'cls'))
+    }
+    
     return params
 
-# Helper function for sync execution
 def solve_dependencies_sync(
     func: Callable,
     context: Optional[Dict[str, Any]] = None

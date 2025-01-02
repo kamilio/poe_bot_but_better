@@ -5,9 +5,9 @@ import httpx
 RequestOrMessage = Union[str, List[str], fp.QueryRequest, fp.ProtocolMessage, List[fp.ProtocolMessage]]
 
 def normalize_request(original_request: fp.QueryRequest, request_or_message: RequestOrMessage):
-    if isinstance(request_or_message, str):
+    def create_query_request(query):
         return fp.QueryRequest(
-            query=[fp.ProtocolMessage(role="user", content=request_or_message)],
+            query=query,
             version=original_request.version,
             type=original_request.type,
             user_id=original_request.user_id,
@@ -15,43 +15,28 @@ def normalize_request(original_request: fp.QueryRequest, request_or_message: Req
             message_id=original_request.message_id,
             access_key=original_request.access_key
         )
+
+    def create_protocol_message(content):
+        return fp.ProtocolMessage(role="user", content=content)
+
+    if isinstance(request_or_message, str):
+        return create_query_request([create_protocol_message(request_or_message)])
+    
     elif isinstance(request_or_message, list):
         if all(isinstance(item, str) for item in request_or_message):
-            return fp.QueryRequest(
-                query=[fp.ProtocolMessage(role="user", content=str(item)) for item in request_or_message],
-                version=original_request.version,
-                type=original_request.type,
-                user_id=original_request.user_id,
-                conversation_id=original_request.conversation_id,
-                message_id=original_request.message_id,
-                access_key=original_request.access_key
-            )
+            return create_query_request([create_protocol_message(item) for item in request_or_message])
         elif all(isinstance(item, fp.ProtocolMessage) for item in request_or_message):
-            return fp.QueryRequest(
-                query=[fp.ProtocolMessage(role="user", content=str(item)) if isinstance(item, str) else item for item in request_or_message],
-                version=original_request.version,
-                type=original_request.type,
-                user_id=original_request.user_id,
-                conversation_id=original_request.conversation_id,
-                message_id=original_request.message_id,
-                access_key=original_request.access_key
-            )
-        else:
-            raise ValueError("List must contain only strings or ProtocolMessages")
+            query = [create_protocol_message(item) if isinstance(item, str) else item for item in request_or_message]
+            return create_query_request(query)
+        raise ValueError("List must contain only strings or ProtocolMessages")
+    
     elif isinstance(request_or_message, fp.QueryRequest):
         return request_or_message
+    
     elif isinstance(request_or_message, fp.ProtocolMessage):
-        return fp.QueryRequest(
-            query=[request_or_message],
-            version=original_request.version,
-            type=original_request.type,
-            user_id=original_request.user_id,
-            conversation_id=original_request.conversation_id,
-            message_id=original_request.message_id,
-            access_key=original_request.access_key
-        )
-    else:
-        raise ValueError("Request must be a string, list of strings, QueryRequest, or list of ProtocolMessages. Got: {}".format(request_or_message))
+        return create_query_request([request_or_message])
+    
+    raise ValueError(f"Request must be a string, list of strings, QueryRequest, or list of ProtocolMessages. Got: {request_or_message}")
 
 def create_get_final_response(request: fp.QueryRequest):
     api_key: str = request.access_key

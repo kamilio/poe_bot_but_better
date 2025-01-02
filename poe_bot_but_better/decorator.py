@@ -1,88 +1,87 @@
 import asyncio
+import sse_starlette
 from functools import wraps
-from typing import AsyncIterable, Callable, Union
+from typing import AsyncIterable, Callable, Union, Optional, Dict, Any
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
 
 from poe_bot_but_better.client import create_get_final_response, create_stream_request
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
 
-def normalize_response(response: Union[str, fp.PartialResponse]) -> fp.PartialResponse:
+def normalize_response(response: Union[str, fp.PartialResponse, sse_starlette.sse.ServerSentEvent]) -> Union[fp.PartialResponse, sse_starlette.sse.ServerSentEvent]:
     if isinstance(response, fp.PartialResponse):
         return response
     elif isinstance(response, str):
         return fp.PartialResponse(text=response)
+    elif isinstance(response, sse_starlette.sse.ServerSentEvent):
+        return response
     else:
         raise ValueError("Response must be a string or PartialResponse. Got: {}".format(response))
 
 def poe_bot_but_better(cls):
-    # Check if PoeBot is already in the class's bases
+    if not hasattr(cls, 'get_response'):
+        raise ValueError(f"Class {cls.__name__} must implement get_response method")
+        
     if not issubclass(cls, fp.PoeBot):
-        # Create new class with PoeBot as parent if not already inherited
-        class EnhancedBot(fp.PoeBot, cls):
+        class EnhancedBot(cls, fp.PoeBot):
             pass
         cls = EnhancedBot
     
-    original_get_response = cls.get_response
-    original_get_settings = cls.get_settings
+    original_get_response = getattr(cls, 'get_response')
+    original_get_settings = getattr(cls, 'get_settings', None)
     
-    def get_response_wrapper(func: Callable) -> Callable:
-        @wraps(func)
-        async def wrapped_to_async_generator(self, request: fp.QueryRequest) -> AsyncIterable[fp.PartialResponse]:
-            context = {
-                "self": self,
-                "request": request,
-                "messages": request.query,
-                "bot_name": self.bot_name,
-                
-                # client methods (maybe remove and use Depends instead)
-                "get_final_response": create_get_final_response(request),
-                "stream_request": create_stream_request(request),
-            }
-
-            dependencies = await solve_dependencies(func, context)
-
-            # Handle different types of functions
-            if isasyncgenfunction(func):
-                # Async generator
-                async for item in func(**dependencies):
-                    yield normalize_response(item)
-                    
-            elif iscoroutinefunction(func):
-                # Async function
-                result = await func(**dependencies)
-                yield normalize_response(result)
-                
-            elif isgeneratorfunction(func):
-                # Sync generator
-                for item in func(**dependencies):
-                    yield normalize_response(item)
-                    
-            else:
-                # Sync function
-                result = func(**dependencies)
-                yield normalize_response(result)
-                
-        return wrapped_to_async_generator
+    # Add class attribute for context override
+    cls.dependency_injection_context_override = None
     
-    def get_settings_wrapper(func: Callable) -> Callable:
-        @wraps(func)
-        async def wrapped_settings(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
-            context = {
-                "self": self,
-                "request": request,
-                "bot_name": self.bot_name
-            }
-            
-            dependencies = await solve_dependencies(func, context)
-            
-            # Since get_settings is an async function
-            result = await func(**dependencies)
-            return result
-            
-        return wrapped_settings
+    async def get_response_impl(self, request: fp.QueryRequest) -> AsyncIterable[Union[fp.PartialResponse, sse_starlette.sse.ServerSentEvent]]:
+        context = {
+            "request": request,
+            "messages": request.query,
+            "bot_name": self.bot_name,
+            "get_final_response": create_get_final_response(request),
+            "stream_request": create_stream_request(request),
+        }
+        
+        if self.dependency_injection_context_override:
+            context.update(self.dependency_injection_context_override)
 
-    cls.get_response = get_response_wrapper(original_get_response)
-    cls.get_settings = get_settings_wrapper(original_get_settings)
+        dependencies = await solve_dependencies(original_get_response, context)
+        
+        # Call the original method
+        if isasyncgenfunction(original_get_response):
+            async for item in original_get_response(self, **dependencies):
+                yield normalize_response(item)
+        elif iscoroutinefunction(original_get_response):
+            result = await original_get_response(self, **dependencies)
+            yield normalize_response(result)
+        elif isgeneratorfunction(original_get_response):
+            for item in original_get_response(self, **dependencies):
+                yield normalize_response(item)
+        else:
+            result = original_get_response(self, **dependencies)
+            yield normalize_response(result)
+
+    async def get_settings_impl(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
+        if not original_get_settings:
+            return fp.SettingsResponse()
+            
+        context = {
+            "request": request,
+            "setting": request,
+            "bot_name": self.bot_name
+        }
+        
+        if self.dependency_injection_context_override:
+            context.update(self.dependency_injection_context_override)
+        
+        dependencies = await solve_dependencies(original_get_settings, context)
+        
+        if iscoroutinefunction(original_get_settings):
+            return await original_get_settings(self, **dependencies)
+        return original_get_settings(self, **dependencies)
+
+    cls.get_response = get_response_impl
+    if original_get_settings:
+        cls.get_settings = get_settings_impl
     
     return cls
