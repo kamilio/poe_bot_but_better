@@ -2,7 +2,7 @@ from typing import Any, AsyncGenerator, Callable, Coroutine, List, Optional, Uni
 import fastapi_poe as fp
 import httpx
 
-RequestOrMessage = Union[str, List[str], fp.QueryRequest, fp.ProtocolMessage, List[fp.ProtocolMessage]]
+RequestOrMessage = Union[str, fp.QueryRequest, fp.ProtocolMessage, List[fp.ProtocolMessage]]
 StreamRequestCallable = Callable[
     [RequestOrMessage, str],
     AsyncGenerator[fp.PartialResponse, None]
@@ -25,19 +25,14 @@ def normalize_request(original_request: fp.QueryRequest, request_or_message: Req
             access_key=original_request.access_key
         )
 
-    def create_protocol_message(content):
-        return fp.ProtocolMessage(role="user", content=content)
 
     if isinstance(request_or_message, str):
-        return create_query_request([create_protocol_message(request_or_message)])
+        return create_query_request([fp.ProtocolMessage(role="user", content=request_or_message)])
     
     elif isinstance(request_or_message, list):
-        if all(isinstance(item, str) for item in request_or_message):
-            return create_query_request([create_protocol_message(item) for item in request_or_message])
-        elif all(isinstance(item, fp.ProtocolMessage) for item in request_or_message):
-            query = [create_protocol_message(item) if isinstance(item, str) else item for item in request_or_message]
-            return create_query_request(query)
-        raise ValueError("List must contain only strings or ProtocolMessages")
+        if all(isinstance(item, fp.ProtocolMessage) for item in request_or_message):
+            return create_query_request(request_or_message)
+        raise ValueError("List must contain only ProtocolMessages")
     
     elif isinstance(request_or_message, fp.QueryRequest):
         return request_or_message

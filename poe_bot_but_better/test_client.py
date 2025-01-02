@@ -27,29 +27,6 @@ def test_normalize_request_string():
     assert request.version == original_request.version
     assert request.access_key == original_request.access_key
 
-def test_normalize_request_string_list():
-    original_request = fp.QueryRequest(
-        query=[],
-        version="1.0",
-        type="query", 
-        user_id="test_user",
-        conversation_id="test_conv",
-        message_id="test_msg",
-        access_key="test_key"
-    )
-    
-    # Test with list of strings
-    string_list = ["Hello", "World"]
-    request = normalize_request(original_request, string_list)
-    
-    assert isinstance(request, fp.QueryRequest)
-    assert len(request.query) == 2
-    assert request.query[0].role == "user"
-    assert request.query[0].content == "Hello"
-    assert request.query[1].content == "World"
-    assert request.version == original_request.version
-    assert request.access_key == original_request.access_key
-
 @pytest.mark.asyncio
 async def test_create_get_final_response():
     # Create a sample request
