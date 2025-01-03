@@ -6,6 +6,16 @@ import uuid
 from poe_bot_but_better import normalize_request, solve_dependencies
 from unittest.mock import AsyncMock, MagicMock
 
+mock_query_request = fp.QueryRequest(
+    query=[],
+    version="1.0",
+    type="query",
+    user_id="test_user",
+    conversation_id="test_conv", 
+    message_id="test_msg",
+    access_key="test_key"
+)
+
 class BotTestHelper:
     def __init__(self):
         self.mocked_bots = {}
@@ -39,16 +49,8 @@ class BotTestHelper:
     async def send_message(self, bot_class, messages: List[Any]) -> str:
         bot_name = "TestBot"
         bot = bot_class(bot_name=bot_name)
-        original_request = fp.QueryRequest(
-            query=[],
-            version="1.0",
-            type="query",
-            user_id="test_user",
-            conversation_id="test_conv", 
-            message_id="test_msg",
-            access_key="test_key"
-        )
-        request = normalize_request(original_request, messages)
+        
+        request = normalize_request(mock_query_request, messages)
 
         bot.dependency_injection_context_override = {
             "get_final_response": self._get_final_response,
