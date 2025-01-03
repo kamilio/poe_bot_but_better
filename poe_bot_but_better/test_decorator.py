@@ -79,6 +79,24 @@ async def test_sync_bot_settings():
     assert response.allow_attachments is False
     assert response.enable_image_comprehension is False
 
+@pytest.mark.asyncio
+async def test_dict_bot_settings():
+    @poe_bot_but_better
+    class TestDictBot(fp.PoeBot):
+        async def get_response(self):
+            pass
+
+        async def get_settings(self):
+            return {"allow_attachments": True, "enable_image_comprehension": True}
+    
+    bot = TestDictBot()
+    request = fp.SettingsRequest(version="1", type="settings")
+    
+    response = await bot.get_settings(request)
+    
+    assert response.allow_attachments is True
+    assert response.enable_image_comprehension is True
+
 # Test for error handling
 @poe_bot_but_better
 class TestErrorBot(fp.PoeBot):

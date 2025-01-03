@@ -62,8 +62,10 @@ def poe_bot_but_better(cls):
             yield normalize_response(result)
 
     async def get_settings_impl(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
+        result = fp.SettingsResponse()
+        
         if not original_get_settings:
-            return fp.SettingsResponse()
+            return result 
             
         context = {
             "request": request,
@@ -77,8 +79,14 @@ def poe_bot_but_better(cls):
         dependencies = await solve_dependencies(original_get_settings, context)
         
         if iscoroutinefunction(original_get_settings):
-            return await original_get_settings(self, **dependencies)
-        return original_get_settings(self, **dependencies)
+            result = await original_get_settings(self, **dependencies)
+        else:
+            result = original_get_settings(self, **dependencies)
+
+        if isinstance(result, dict):
+            result = fp.SettingsResponse(**result)
+
+        return result
 
     cls.get_response = get_response_impl
     if original_get_settings:
