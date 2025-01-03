@@ -20,7 +20,7 @@ async def test_image_prompt_gen_bot(bot_helper):
     prompt_gen_mock.assert_called_once()
     
     image_gen_mock.assert_called_once()
-    assert image_gen_mock.args[0][0].content, "A meadow on a bright summer day."
+    image_gen_mock.assert_called_with_content("A meadow on a bright summer day.")
     
     assert response ==  "image_placeholder"
     
