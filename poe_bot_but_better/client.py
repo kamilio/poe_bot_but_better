@@ -42,6 +42,10 @@ def normalize_request(original_request: fp.QueryRequest, request_or_message: Req
     
     raise ValueError(f"Request must be a string, list of strings, QueryRequest, or list of ProtocolMessages. Got: {request_or_message}")
 
+def on_error(e, msg):
+    print(msg)
+    raise e
+
 def create_get_final_response(request: fp.QueryRequest) -> GetFinalResponseCallable:
     api_key: str = request.access_key
     async def get_final_response(
@@ -56,6 +60,10 @@ def create_get_final_response(request: fp.QueryRequest) -> GetFinalResponseCalla
             request=modified_request,
             bot_name=bot_name,
             api_key=api_key,
+            
+            # If it would up to me I would change these defaults
+            on_error=on_error, # the errors being swallowed is a confusing
+            num_tries=0, # spent a lot of time debugging why my code was executed twice, only to find out it was because of the retries
         )
     
     return get_final_response
@@ -76,6 +84,9 @@ def create_stream_request(request: fp.QueryRequest) -> StreamRequestCallable:
             request=modified_request,
             bot_name=bot_name,
             api_key=api_key,
+            # If it would up to me I would change these defaults
+            on_error=on_error, # the errors being swallowed is a confusing
+            num_tries=0, # spent a lot of time debugging why my code was executed twice, only to find out it was because of the retries
         ):
             yield message
             
