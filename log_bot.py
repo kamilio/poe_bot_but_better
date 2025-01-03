@@ -4,17 +4,13 @@ Sample bot that shows the query sent to the bot.
 
 """
 
-from __future__ import annotations
-
-from typing import AsyncIterable, List
+from typing import List
 
 import fastapi_poe as fp
-from devtools import PrettyFormat
-from modal import App, Image, asgi_app
+from pprint import pformat
+
 
 from poe_bot_but_better.decorator import poe_bot_but_better
-
-pformat = PrettyFormat(width=85)
 
 @poe_bot_but_better
 class LogBot:
