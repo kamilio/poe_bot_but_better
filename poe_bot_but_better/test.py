@@ -155,5 +155,6 @@ def bot_helper():
 def bot_helper_wrong_usage(*args, **kwargs):
     raise ValueError("Use bot_helper fixture in your test: async def test_something(bot_helper): ...")
 
-bot_helper.mock_bot = bot_helper_wrong_usage
-bot_helper.send_message = bot_helper_wrong_usage
+bot_helper.mock_bot = bot_helper_wrong_usage  # type: ignore
+bot_helper.send_message = bot_helper_wrong_usage  # type: ignore
+bot_helper.get_settings = bot_helper_wrong_usage  # type: ignore
