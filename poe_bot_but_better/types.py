@@ -1,0 +1,2 @@
+class PoeBotError(Exception):
+    pass

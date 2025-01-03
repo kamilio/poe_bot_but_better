@@ -26,3 +26,22 @@ async def test_error_response_bot(bot_helper):
     assert response.is_error is True
     assert response.versions[-1] == "Working" # previous version
     
+@pytest.mark.asyncio
+async def test_sync_bot(bot_helper):
+    @poe_bot_but_better
+    class SyncBotGetFinalResponse:
+        def get_response(self, get_final_response, stream_request):
+            response = get_final_response("Hello", "GPT-4")
+            return response
+    bot_helper.mock_bot("GPT-4", "Working")
+    response = await bot_helper.send_message(SyncBotGetFinalResponse, "Hello")
+    assert response == "Working"
+
+    @poe_bot_but_better
+    class SyncBotStreamRequest:
+        def get_response(self, stream_request):
+            for part in stream_request("Hello", "GPT-4"):
+                yield part
+
+    response = await bot_helper.send_message(SyncBotStreamRequest, "Hello")
+    assert response == "Working"

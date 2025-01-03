@@ -8,6 +8,9 @@ import sse_starlette
 from poe_bot_but_better import normalize_request, solve_dependencies
 from unittest.mock import AsyncMock, MagicMock
 
+class PoeBotTestError(Exception):
+    pass
+
 class ResponseString(str):
     def __new__(cls, content):
         instance = super().__new__(cls, content)
@@ -83,9 +86,6 @@ class BotTestHelper:
         self.responses = {}
 
     def mock_bot(self, bot_name: str, responses: Union[str, List[str]]):
-        if isinstance(responses, str):
-            responses = [responses]
-
         self.responses[bot_name] = responses
         mock = AsyncQueryMock(bot_name=bot_name)
 
@@ -97,18 +97,27 @@ class BotTestHelper:
             for response in responses:
                 yield fp.PartialResponse(text=response)
         return generator()
+    
+    def _get_responses_for_bot(self, request_or_message, bot_name: str) -> List[str]:
+        if bot_name not in self.responses:
+            raise PoeBotTestError(f"Bot {bot_name} not mocked. Use bot_helper.mock_bot(\"{bot_name}\", \"response\")")
+        self.mocked_bots[bot_name](request_or_message)
+        responses = self.responses[bot_name]
+        
+        if isinstance(responses, str):
+            responses = [responses]
+        elif callable(responses):
+            responses = responses(request_or_message)
+
+        return responses
 
     async def _get_final_response(self, request_or_message, bot_name: str, **kwargs) -> str:
-        if bot_name not in self.responses:
-            raise ValueError(f"Bot {bot_name} not mocked. Use bot_helper.mock_bot(\"{bot_name}\", \"response\")")
-        self.mocked_bots[bot_name](request_or_message)
-        return "".join(self.responses[bot_name])
+        responses = self._get_responses_for_bot(request_or_message, bot_name)
+        return "".join(responses)
 
     async def _stream_request(self, request_or_message, bot_name: str, **kwargs) -> AsyncGenerator[fp.PartialResponse, None]:
-        if bot_name not in self.responses:
-            raise ValueError(f"Bot {bot_name} not mocked. Use bot_helper.mock_bot(\"{bot_name}\", \"response\")")
-        self.mocked_bots[bot_name](request_or_message)
-        async for response in self._create_response_generator(self.responses[bot_name]):
+        responses = self._get_responses_for_bot(request_or_message, bot_name)
+        async for response in self._create_response_generator(responses):
             yield response
 
     async def send_message(self, bot_class, messages: List[Any]) -> str:
@@ -138,7 +147,7 @@ class BotTestHelper:
             elif isinstance(part, sse_starlette.sse.ServerSentEvent):
                 response.append_event(part)
             else:
-                raise ValueError(f"Unexpected response type: {part}")
+                raise PoeBotTestError(f"Unexpected response type: {part}")
             
         return response
     
@@ -153,7 +162,7 @@ def bot_helper():
     return BotTestHelper()
 
 def bot_helper_wrong_usage(*args, **kwargs):
-    raise ValueError("Use bot_helper fixture in your test: async def test_something(bot_helper): ...")
+    raise PoeBotTestError("Use bot_helper fixture in your test: async def test_something(bot_helper): ...")
 
 bot_helper.mock_bot = bot_helper_wrong_usage  # type: ignore
 bot_helper.send_message = bot_helper_wrong_usage  # type: ignore

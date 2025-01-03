@@ -1,6 +1,43 @@
 from typing import Any, AsyncGenerator, Awaitable, BinaryIO, Callable, Coroutine, List, Optional, Union
 import fastapi_poe as fp
-import httpx
+from poe_bot_but_better.types import PoeBotError
+
+from functools import wraps
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from inspect import isasyncgenfunction
+
+# Convert async function to sync function (including generators)
+def make_sync(async_func):
+    @wraps(async_func)
+    def wrapper(*args, **kwargs):
+        def run_in_new_loop():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            
+            if isasyncgenfunction(async_func):
+                async def collect():
+                    result = []
+                    async for item in async_func(*args, **kwargs):
+                        result.append(item)
+                    return result
+                result = loop.run_until_complete(collect())
+            else:
+                result = loop.run_until_complete(async_func(*args, **kwargs))
+                
+            loop.close()
+            return result
+
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_in_new_loop)
+            result = future.result()
+            
+            # If it was an async generator, return a generator
+            if isasyncgenfunction(async_func):
+                return iter(result)
+            return result
+            
+    return wrapper
 
 RequestOrMessage = Union[str, fp.QueryRequest, fp.ProtocolMessage, List[fp.ProtocolMessage]]
 StreamRequestCallable = Callable[
@@ -32,7 +69,7 @@ def normalize_request(original_request: fp.QueryRequest, request_or_message: Req
     elif isinstance(request_or_message, list):
         if all(isinstance(item, fp.ProtocolMessage) for item in request_or_message):
             return create_query_request(request_or_message)
-        raise ValueError("List must contain only ProtocolMessages")
+        raise PoeBotError("List must contain only ProtocolMessages")
     
     elif isinstance(request_or_message, fp.QueryRequest):
         return request_or_message
@@ -40,7 +77,7 @@ def normalize_request(original_request: fp.QueryRequest, request_or_message: Req
     elif isinstance(request_or_message, fp.ProtocolMessage):
         return create_query_request([request_or_message])
     
-    raise ValueError(f"Request must be a string, list of strings, QueryRequest, or list of ProtocolMessages. Got: {request_or_message}")
+    raise PoeBotError(f"Request must be a string, list of strings, QueryRequest, or list of ProtocolMessages. Got: {request_or_message}")
 
 def on_error(e, msg):
     print(msg)
