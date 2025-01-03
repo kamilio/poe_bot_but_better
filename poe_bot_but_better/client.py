@@ -1,4 +1,4 @@
-from typing import Any, AsyncGenerator, Callable, Coroutine, List, Optional, Union
+from typing import Any, AsyncGenerator, Awaitable, BinaryIO, Callable, Coroutine, List, Optional, Union
 import fastapi_poe as fp
 import httpx
 
@@ -91,3 +91,17 @@ def create_stream_request(request: fp.QueryRequest) -> StreamRequestCallable:
             yield message
             
     return stream_request
+
+def create_post_message_attachment(bot: fp.PoeBot, request: fp.QueryRequest) -> Callable[..., Awaitable[None]]:
+    message_id: str = request.message_id
+    
+    async def post_message_attachment(
+        download_url: Optional[str] = None,
+        file_data: Optional[Union[bytes, BinaryIO]] = None,
+        filename: Optional[str] = None,
+        content_type: Optional[str] = None,
+        is_inline: bool = False,
+    ) -> None:
+        await bot.post_message_attachment(download_url=download_url, file_data=file_data, filename=filename, content_type=content_type, is_inline=is_inline, message_id=message_id)
+    
+    return post_message_attachment
