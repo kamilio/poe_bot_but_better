@@ -3,7 +3,6 @@ import sse_starlette
 from functools import wraps
 from typing import AsyncIterable, Callable, Union, Optional, Dict, Any
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
-
 from poe_bot_but_better.client import create_get_final_response, create_stream_request
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
@@ -91,5 +90,9 @@ def poe_bot_but_better(cls):
     cls.get_response = get_response_impl
     if original_get_settings:
         cls.get_settings = get_settings_impl
+
+    # Todo: 
+    #  - add `on_feedback`
+    #  - merge the get_response_with_context and add to dependency injection context
     
     return cls
