@@ -1,43 +1,63 @@
 from typing import Any, AsyncGenerator, Awaitable, BinaryIO, Callable, Coroutine, List, Optional, Union
 import fastapi_poe as fp
 from poe_bot_but_better.types import PoeBotError
-
-from functools import wraps
 import asyncio
+from functools import wraps
+import threading
+import queue
 from concurrent.futures import ThreadPoolExecutor
-from inspect import isasyncgenfunction
 
-# Convert async function to sync function (including generators)
+# TODO To be honest, not sure if this is a good idea, maybe just disabling it is ok.
 def make_sync(async_func):
     @wraps(async_func)
     def wrapper(*args, **kwargs):
         def run_in_new_loop():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
-            if isasyncgenfunction(async_func):
-                async def collect():
-                    result = []
-                    async for item in async_func(*args, **kwargs):
-                        result.append(item)
-                    return result
-                result = loop.run_until_complete(collect())
-            else:
-                result = loop.run_until_complete(async_func(*args, **kwargs))
-                
+            result = loop.run_until_complete(async_func(*args, **kwargs))
             loop.close()
             return result
 
         with ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(run_in_new_loop)
-            result = future.result()
-            
-            # If it was an async generator, return a generator
-            if isasyncgenfunction(async_func):
-                return iter(result)
-            return result
+            return future.result()
             
     return wrapper
+
+def make_sync_generator(async_gen):
+    @wraps(async_gen)
+    def wrapper(*args, **kwargs):
+        q = queue.Queue()
+        stop_event = threading.Event()
+        
+        async def aiter_to_queue():
+            try:
+                async for item in async_gen(*args, **kwargs):
+                    q.put(item)
+                q.put(StopIteration)
+            except Exception as e:
+                q.put(e)
+                
+        def run_in_thread():
+            asyncio.run(aiter_to_queue())
+            
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(run_in_thread)
+            
+            while not future.done() or not q.empty():
+                item = q.get()
+                if isinstance(item, Exception):
+                    raise item
+                if item is StopIteration:
+                    break
+                yield item
+                
+    return wrapper
+
+def disabled_fn(fn_name, reason = ""):
+    def fn(*args, **kwargs):
+        raise PoeBotError(f"{fn_name} {reason}")
+    return fn
 
 RequestOrMessage = Union[str, fp.QueryRequest, fp.ProtocolMessage, List[fp.ProtocolMessage]]
 StreamRequestCallable = Callable[

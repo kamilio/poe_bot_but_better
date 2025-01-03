@@ -3,7 +3,7 @@ import sse_starlette
 from functools import wraps
 from typing import AsyncIterable, Callable, Union, Optional, Dict, Any
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
-from poe_bot_but_better.client import create_get_final_response, create_stream_request, create_post_message_attachment, make_sync
+from poe_bot_but_better.client import create_get_final_response, create_stream_request, create_post_message_attachment, make_sync, make_sync_generator
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
 from poe_bot_but_better.types import PoeBotError
@@ -61,7 +61,7 @@ def poe_bot_but_better(cls):
         elif isgeneratorfunction(original_get_response):
             context.update({
                 "get_final_response": make_sync(context["get_final_response"]),
-                "stream_request": make_sync(context["stream_request"]),
+                "stream_request": make_sync_generator(context["stream_request"]),
                 "post_message_attachment": make_sync(context["post_message_attachment"]),
             })
             dependencies = await solve_dependencies(original_get_response, context)
@@ -70,7 +70,7 @@ def poe_bot_but_better(cls):
         else:
             context.update({
                 "get_final_response": make_sync(context["get_final_response"]),
-                "stream_request": make_sync(context["stream_request"]),
+                "stream_request": make_sync_generator(context["stream_request"]),
                 "post_message_attachment": make_sync(context["post_message_attachment"]),
             })
             dependencies = await solve_dependencies(original_get_response, context)

@@ -28,6 +28,7 @@ async def test_error_response_bot(bot_helper):
     
 @pytest.mark.asyncio
 async def test_sync_bot(bot_helper):
+    # sync function
     @poe_bot_but_better
     class SyncBotGetFinalResponse:
         def get_response(self, get_final_response, stream_request):
@@ -37,6 +38,7 @@ async def test_sync_bot(bot_helper):
     response = await bot_helper.send_message(SyncBotGetFinalResponse, "Hello")
     assert response == "Working"
 
+    # sync generator
     @poe_bot_but_better
     class SyncBotStreamRequest:
         def get_response(self, stream_request):
