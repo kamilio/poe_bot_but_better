@@ -6,17 +6,19 @@ from typing import AsyncIterable
 import fastapi_poe as fp
 from modal import App, Image, Mount, asgi_app
 
+from poe_bot_but_better import poe_bot_but_better
 
-class VideoBot(fp.PoeBot):
+@poe_bot_but_better
+class VideoBot:
     async def get_response(
-        self, request: fp.QueryRequest
-    ) -> AsyncIterable[fp.PartialResponse]:
+        self, request: fp.QueryRequest, post_message_attachment
+    ):
         with open("/root/assets/tiger.mp4", "rb") as file:
             file_data = file.read()
-        await self.post_message_attachment(
-            message_id=request.message_id, file_data=file_data, filename="tiger.mp4"
-        )
-        yield fp.PartialResponse(text="Attached a video.")
+
+        await post_message_attachment(file_data=file_data, filename="tiger.mp4")
+        
+        return "Attached a video."
 
 
 REQUIREMENTS = ["fastapi-poe==0.0.48"]

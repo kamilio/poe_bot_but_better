@@ -3,7 +3,7 @@ import sse_starlette
 from functools import wraps
 from typing import AsyncIterable, Callable, Union, Optional, Dict, Any
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
-from poe_bot_but_better.client import create_get_final_response, create_stream_request
+from poe_bot_but_better.client import create_get_final_response, create_stream_request, create_post_message_attachment
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
 
@@ -37,8 +37,11 @@ def poe_bot_but_better(cls):
             "request": request,
             "messages": request.query,
             "bot_name": self.bot_name,
+            
+            # maybe remove these
             "get_final_response": create_get_final_response(request),
             "stream_request": create_stream_request(request),
+            "post_message_attachment": create_post_message_attachment(self, request),
         }
         
         if self.dependency_injection_context_override:
@@ -58,7 +61,7 @@ def poe_bot_but_better(cls):
                 yield normalize_response(item)
         else:
             result = original_get_response(self, **dependencies)
-            yield normalize_response(result)
+            yield normalize_response(result)        
 
     async def get_settings_impl(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
         result = fp.SettingsResponse()
