@@ -11,7 +11,7 @@ async def test_blank_bot(bot_helper):
 
     response = await bot_helper.send_message(DummyBot, "Hello")
     assert response == ""
-    assert len(response.events) == 1
+    assert len(response.events) == 1 # default event in the Fastapi_Poe codebase
 
 @pytest.mark.asyncio
 async def test_error_response_bot(bot_helper):
