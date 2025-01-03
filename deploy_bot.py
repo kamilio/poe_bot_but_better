@@ -8,8 +8,8 @@ REQUIREMENTS = ["fastapi-poe==0.0.48"]
 image = Image.debian_slim().pip_install(*REQUIREMENTS)
 app = App("poe-bot-poe")
 
-# 1 Deploy the bot - modal server deploy_bot.py (copy the deployment URL - ends with .modal.run)
-# 2 Create Poe bot - https://poe.com/create_bot?server=1 (copy access key)
+# 1 Deploy the bot - `modal server deploy_bot.py` (copy the deployment URL - ends with .modal.run)
+# 2 Create bot on Poe - https://poe.com/create_bot?server=1 (copy access key)
 access_key = ""
 # 3 Set the name of the bot 
 bot_name = ""
