@@ -6,10 +6,13 @@ This document outlines three key proposals to enhance the Poe Bot API, making it
 
 Implement FastAPI-style dependency injection for core bot functions, particularly get_response and get_settings.
 
-Key Dependencies (special cases matchedo on argument name)
+Key Dependencies (special cases matched on argument name)
 - request
 - messages (request.query is so confusing)
 - bot_name (useful)
+- get_final_response
+- stream_request
+- post_message_attachment
 
 The dependency injection is a very powerful pattern and provides easy way to build extensions that can be shared across bots. 
 
@@ -33,5 +36,5 @@ From my experience, the bots I created, are mashups of various LLMs, output is p
 
 Another addition is ability to yield string (or return string).
 
-
-
+## Add test helpers
+Writing tests is hard, let's make it easier. 

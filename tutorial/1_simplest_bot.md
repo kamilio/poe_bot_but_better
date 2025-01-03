@@ -5,14 +5,17 @@ Let's create the simplest bot possible on Poe. We'll be creating a bot that repe
 
 The first step is to create a class that defines a method get_response.
 
-The get_response uses dependency injection and provides these arguments
+The get_response uses dependency injection and provides some special arguments such as
 - `request: fp.QueryRequest`
 - `messages: list[fp.ProtocolMessage]`
-We'll be accessing the context, all messages sent to and received by the bot, and retrieving the last message with index -1. The `fp.ProtocolMessage` has a bunch of useful attributes, however we'll be using only `content`
+- ... and more later
+
+The beauty of it is that you you can define the arguments that you need and they will be provided automatically.
+
+We'll be accessing the context, all messages sent to and received by the bot, and retrieving the last message with index -1. The class `fp.ProtocolMessage` has a bunch of useful attributes, however we'll be using only `content`
 
 ```python
 from poe_bot_but_better import poe_bot_but_better
-
 
 @poe_bot_but_better
 class EchoBot:

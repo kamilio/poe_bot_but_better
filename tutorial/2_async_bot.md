@@ -1,8 +1,8 @@
 # Async bot
 
-In the previous chapter, we've built super simple bot, but in reality you might want to query database, LLM or any other asynchronous action. So let's do that, and let's query some other bots on Poe. We'll be building on top of the EchoBot we created previously.
+In the previous chapter, we've built super simple bot, but in reality you might want to query database, LLM or any other asynchronous action. So let's do that! We'll query other bots on Poe. We'll be building on top of the EchoBot we created previously.
 
-Let's query existing image generation bot but modify the original message to turn the image black and white.  
+Let's get response from existing image generation bot but modify the original message (prompt) to turn the image black and white.  
 
 Thanks to dependency injection we can access other useful functions such as `get_final_response` that queries any bot on Poe and gets the full response.
 
