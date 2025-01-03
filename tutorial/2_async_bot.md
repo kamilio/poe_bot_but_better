@@ -8,7 +8,6 @@ Thanks to dependency injection we can access other useful functions such as `get
 
 
 ```python
-import fastapi_poe as fp
 from poe_bot_but_better import poe_bot_but_better
 
 

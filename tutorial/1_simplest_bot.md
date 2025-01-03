@@ -11,7 +11,6 @@ The get_response uses dependency injection and provides these arguments
 We'll be accessing the context, all messages sent to and received by the bot, and retrieving the last message with index -1. The `fp.ProtocolMessage` has a bunch of useful attributes, however we'll be using only `content`
 
 ```python
-import fastapi_poe as fp
 from poe_bot_but_better import poe_bot_but_better
 
 
@@ -36,4 +35,25 @@ async def test_echo_bot_simple(bot_helper):
     assert response == "HELLO"
 ```
 
-Or deploy it to production
+Or deploy it to production by setting up the modal deploy script. We can re-use this script for our next iterations. 
+
+deploy_bot.py
+```python
+from modal import App, Image, asgi_app
+from poe_bot_but_better import poe_bot_but_better
+
+
+REQUIREMENTS = ["fastapi-poe==0.0.48"]
+image = Image.debian_slim().pip_install(*REQUIREMENTS)
+app = App("echobot-poe")
+
+
+@app.function(image=image)
+@asgi_app()
+def fastapi_app():
+    bot = EchoBot()
+    # see https://creator.poe.com/docs/quick-start#configuring-the-access-credentials
+    # app = fp.make_app(bot, access_key=<YOUR_ACCESS_KEY>, bot_name=<YOUR_BOT_NAME>)
+    app = fp.make_app(bot, allow_without_key=True)
+    return app
+```
