@@ -18,6 +18,7 @@ class ResponseString(str):
         self.suggested_replies = []
         self.versions = []
         self.events = []
+        self.is_error = False
     
     def append_suggested_reply(self, suggested_reply: str):
         self.suggested_replies.append(suggested_reply)
@@ -29,6 +30,11 @@ class ResponseString(str):
         new_string = ResponseString(new_content)
         new_string.versions.append(self)
         new_string.suggested_replies = self.suggested_replies
+        return new_string
+    
+    def error(self, error_message: str):
+        new_string = self.replacemenet(error_message)
+        new_string.is_error = True
         return new_string
     
     def append(self, new_content: str):
@@ -118,7 +124,10 @@ class BotTestHelper:
 
         response = ResponseString("")
         async for part in bot.get_response(request):
-            if isinstance(part, fp.PartialResponse):
+            if isinstance(part, fp.ErrorResponse):
+                response = response.error(part.text)
+                return response # bot stop execution here
+            elif isinstance(part, fp.PartialResponse):
                 if part.is_replace_response:
                     response = response.replacemenet(part.text)
                 elif part.is_suggested_reply:
