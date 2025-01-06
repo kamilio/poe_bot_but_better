@@ -108,6 +108,14 @@ async def test_dataclass_dependency():
     assert result["config"].name == "test"
     assert result["config"].value == 42
 
+    async def target_2(config: Annotated[Config, Depends()]):
+        return config
+    
+    result = await solve_dependencies(target_2)
+    assert isinstance(result["config"], Config)
+    assert result["config"].name == "test"
+    assert result["config"].value == 42
+
 def test_sync_wrapper():
     def get_value():
         return 42

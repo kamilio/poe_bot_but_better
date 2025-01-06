@@ -13,6 +13,7 @@ class Depends:
     ) -> None:
         self.dependency = dependency or (lambda: None)
         self.use_cache = use_cache
+        self.is_default = dependency is None
 
 async def solve_dependencies(
     func: Callable,
@@ -47,7 +48,15 @@ async def solve_dependencies(
                     dependency = arg.dependency
                     if arg.use_cache and dependency in cache:
                         return cache[dependency]
-                    
+                    # Handle empty Depends() with type annotation
+                    if arg.is_default and isinstance(args[0], type):
+                        dependency_type = args[0]
+                        dep_params = await solve_dependencies(dependency_type, context)
+                        result = dependency_type(**dep_params) if is_dataclass(dependency_type) else dependency_type()
+                        if arg.use_cache:
+                            cache[dependency_type] = result
+                        return result
+
                     dep_params = await solve_dependencies(dependency, context)
                     
                     if inspect.iscoroutinefunction(dependency):
