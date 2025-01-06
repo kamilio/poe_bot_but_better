@@ -29,12 +29,12 @@ class BestResponseBot:
             request, 
             get_final_response, 
             get_final_response_tuple: Annotated[Any, Depends(create_get_final_response_tuple)],
-            config: Annotated[Config, Depends()]
+            config: Config
         ):
         responses = dict(await asyncio.gather(*(get_final_response_tuple(request, bot_name) for bot_name in config.bots)))
         prompt = "Which response is best? Output only the key from the json. Nothing else is permitted. \n\n"
         best_key = await get_final_response(prompt+json.dumps(responses, indent=4), config.decision_bot)
-        
+        print("Best key:", best_key)
         try:
             return responses[best_key]
         except KeyError:
