@@ -8,73 +8,77 @@ mock_message = fp.ProtocolMessage(role="user", content="Hello, world!")
 mock_messages = [mock_message]
 
 # Test Bots
-@poe_bot_but_better
-class TestEchoBot(fp.PoeBot):
-    async def get_response(
-        self, request: fp.QueryRequest
-    ) -> AsyncIterable[fp.PartialResponse]:
-        last_message = request.query[-1].content
-        yield fp.PartialResponse(text=last_message)
+@pytest.fixture
+def test_echo_bot():
+    @poe_bot_but_better
+    class TestEchoBot(fp.PoeBot):
+        async def get_response(
+            self, request: fp.QueryRequest
+        ) -> AsyncIterable[fp.PartialResponse]:
+            last_message = request.query[-1].content
+            yield fp.PartialResponse(text=last_message)
 
-    async def get_settings(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
-        return fp.SettingsResponse(
-            allow_attachments=True,
-            enable_image_comprehension=True
-        )
+        async def get_settings(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
+            return fp.SettingsResponse(
+                allow_attachments=True,
+                enable_image_comprehension=True
+            )
+    
+    return TestEchoBot()
 
-@poe_bot_but_better
-class TestSyncBot(fp.PoeBot):
-    def get_response(self, request: fp.QueryRequest):
-        last_message = request.query[-1].content
-        return fp.PartialResponse(text=last_message)
+@pytest.fixture
+def test_sync_bot():
+    @poe_bot_but_better
+    class TestSyncBot(fp.PoeBot):
+        def get_response(self, request: fp.QueryRequest):
+            last_message = request.query[-1].content
+            return fp.PartialResponse(text=last_message)
 
-    async def get_settings(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
-        return fp.SettingsResponse(
-            allow_attachments=False,
-            enable_image_comprehension=False
-        )
+        async def get_settings(self, request: fp.SettingsRequest) -> fp.SettingsResponse:
+            return fp.SettingsResponse(
+                allow_attachments=False,
+                enable_image_comprehension=False
+            )
+    
+    return TestSyncBot()
 
 # Tests
 @pytest.mark.asyncio
-async def test_echo_bot_response():
-    bot = TestEchoBot()
+async def test_echo_bot_response(test_echo_bot):
     request = fp.QueryRequest(query=mock_messages, version="1", type="query", user_id="123", conversation_id="456", message_id="789")
     
     responses = []
-    async for response in bot.get_response(request):
+    async for response in test_echo_bot.get_response(request):
         responses.append(response)
     
     assert len(responses) == 1
     assert responses[0].text == "Hello, world!"
 
 @pytest.mark.asyncio
-async def test_echo_bot_settings():
-    bot = TestEchoBot()
+async def test_echo_bot_settings(test_echo_bot):
     request = fp.SettingsRequest(version="1", type="settings")
     
-    response = await bot.get_settings(request)
+    response = await test_echo_bot.get_settings(request)
     
     assert response.allow_attachments is True
     assert response.enable_image_comprehension is True
 
 @pytest.mark.asyncio
-async def test_sync_bot_response():
-    bot = TestSyncBot()
+async def test_sync_bot_response(test_sync_bot):
     request = fp.QueryRequest(query=mock_messages, version="1", type="query", user_id="123", conversation_id="456", message_id="789")
     
     responses = []
-    async for response in bot.get_response(request):
+    async for response in test_sync_bot.get_response(request):
         responses.append(response)
     
     assert len(responses) == 1
     assert responses[0].text == "Hello, world!"
 
 @pytest.mark.asyncio
-async def test_sync_bot_settings():
-    bot = TestSyncBot()
+async def test_sync_bot_settings(test_sync_bot):
     request = fp.SettingsRequest(version="1", type="settings")
     
-    response = await bot.get_settings(request)
+    response = await test_sync_bot.get_settings(request)
     
     assert response.allow_attachments is False
     assert response.enable_image_comprehension is False
@@ -97,17 +101,18 @@ async def test_dict_bot_settings():
     assert response.allow_attachments is True
     assert response.enable_image_comprehension is True
 
-# Test for error handling
-@poe_bot_but_better
-class TestErrorBot(fp.PoeBot):
-    async def get_response(self):
-        raise ValueError("Test error")
-
-    async def get_settings(self):
-        raise ValueError("Test error")
-
 @pytest.mark.asyncio
 async def test_error_handling():
+    # Test for error handling
+    @poe_bot_but_better
+    class TestErrorBot(fp.PoeBot):
+        async def get_response(self):
+            raise ValueError("Test error")
+
+        async def get_settings(self):
+            raise ValueError("Test error")
+        
+        
     bot = TestErrorBot()
     request = fp.QueryRequest(query=mock_messages, version="1", type="query", user_id="123", conversation_id="456", message_id="789")
     

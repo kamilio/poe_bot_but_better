@@ -1,11 +1,11 @@
 import pytest
 import fastapi_poe as fp
-from typing import Any, AsyncGenerator, List, Optional, Union
+from typing import Any, AsyncGenerator, Callable, List, Optional, Union
 from dataclasses import dataclass, field
 import uuid
 
 import sse_starlette
-from poe_bot_but_better import normalize_request, solve_dependencies
+from poe_bot_but_better import normalize_request, solve_dependencies, RequestOrMessage
 from unittest.mock import AsyncMock, MagicMock
 
 class PoeBotTestError(Exception):
@@ -85,7 +85,7 @@ class BotTestHelper:
         self.mocked_bots = {}
         self.responses = {}
 
-    def mock_bot(self, bot_name: str, responses: Union[str, List[str]]):
+    def mock_bot(self, bot_name: str, responses: Union[str, List[str], Callable]):
         self.responses[bot_name] = responses
         mock = AsyncQueryMock(bot_name=bot_name)
 
@@ -98,10 +98,10 @@ class BotTestHelper:
                 yield fp.PartialResponse(text=response)
         return generator()
     
-    def _get_responses_for_bot(self, request_or_message, bot_name: str) -> List[str]:
+    async def _get_responses_for_bot(self, request_or_message, bot_name: str) -> List[str]:
         if bot_name not in self.responses:
             raise PoeBotTestError(f"Bot {bot_name} not mocked. Use bot_helper.mock_bot(\"{bot_name}\", \"response\")")
-        self.mocked_bots[bot_name](request_or_message)
+        await self.mocked_bots[bot_name](request_or_message)
         responses = self.responses[bot_name]
         
         if isinstance(responses, str):
@@ -112,15 +112,15 @@ class BotTestHelper:
         return responses
 
     async def _get_final_response(self, request_or_message, bot_name: str, **kwargs) -> str:
-        responses = self._get_responses_for_bot(request_or_message, bot_name)
+        responses = await self._get_responses_for_bot(request_or_message, bot_name)
         return "".join(responses)
 
     async def _stream_request(self, request_or_message, bot_name: str, **kwargs) -> AsyncGenerator[fp.PartialResponse, None]:
-        responses = self._get_responses_for_bot(request_or_message, bot_name)
+        responses = await self._get_responses_for_bot(request_or_message, bot_name)
         async for response in self._create_response_generator(responses):
             yield response
 
-    async def send_message(self, bot_class, messages: List[Any]) -> str:
+    async def send_message(self, bot_class, messages: RequestOrMessage, *, dependency_injection_context_override: Optional[dict] = None) -> str:
         bot_name = "TestBot"
         bot = bot_class(bot_name=bot_name)
         
@@ -129,6 +129,7 @@ class BotTestHelper:
         bot.dependency_injection_context_override = {
             "get_final_response": self._get_final_response,
             "stream_request": self._stream_request,
+            **(dependency_injection_context_override or {})
         }
 
         response = ResponseString("")
@@ -151,14 +152,18 @@ class BotTestHelper:
             
         return response
     
-    async def get_settings(self, bot_class) -> fp.SettingsResponse:
+    async def get_settings(self, bot_class, *, dependency_injection_context_override: Optional[dict] = None) -> fp.SettingsResponse:
         bot_name = "TestBot"
         bot = bot_class(bot_name=bot_name)
+        if dependency_injection_context_override:
+            bot.dependency_injection_context_override = dependency_injection_context_override
+        
         request = fp.SettingsRequest(version="1", type="settings")
+        
         return await bot.get_settings(request)
 
 @pytest.fixture
-def bot_helper():
+def bot_helper() -> BotTestHelper:
     return BotTestHelper()
 
 def bot_helper_wrong_usage(*args, **kwargs):
