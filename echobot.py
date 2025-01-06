@@ -12,4 +12,4 @@ from poe_bot_but_better import poe_bot_but_better
 @poe_bot_but_better
 class EchoBot:
     def get_response(self, messages: list[fp.ProtocolMessage]):
-        return messages[-1].content
+        return messages[-1].content.upper()
