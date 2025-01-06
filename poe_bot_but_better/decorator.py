@@ -11,6 +11,8 @@ from poe_bot_but_better.types import PoeBotError
 def normalize_response(response: Union[str, fp.PartialResponse, sse_starlette.sse.ServerSentEvent]) -> Union[fp.PartialResponse, sse_starlette.sse.ServerSentEvent]:
     if isinstance(response, fp.PartialResponse):
         return response
+    elif response is None:
+        return fp.PartialResponse(text="")
     elif isinstance(response, str):
         return fp.PartialResponse(text=response)
     elif isinstance(response, sse_starlette.sse.ServerSentEvent):

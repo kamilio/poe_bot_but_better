@@ -48,3 +48,13 @@ async def test_sync_bot(bot_helper):
 
     response = await bot_helper.send_message(SyncBotStreamRequest, "Hello")
     assert response == "Working" # only working because of the return after first chunk
+
+@pytest.mark.asyncio
+async def test_none_bot(bot_helper):
+    @poe_bot_but_better
+    class NoneBot:
+        async def get_response(self):
+            return None
+
+    response = await bot_helper.send_message(NoneBot, "Hello")
+    assert response == ""
