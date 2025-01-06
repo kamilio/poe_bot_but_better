@@ -8,15 +8,16 @@ Implement FastAPI-style dependency injection for core bot functions, mainly for 
 
 Key Dependencies (special cases matched on argument name)
 - request
-- messages (request.query is so confusing)
+- messages (request.query is confusing)
 - bot_name (useful)
+
 - get_final_response
 - stream_request
 - post_message_attachment
 
-The dependency injection is a very powerful pattern and provides easy way to build extensions that can be shared across bots. 
+The dependency injection is a powerful pattern and provides easy way to build extensions that can be shared across bots. 
 
-Bonus: We could remove the functions get_response_with_context, that are not interesting for most of the users but cause mental overhead.
+Bonus: We could remove the functions get_response_with_context, that are not interesting for most of the users but bloat the documentation.
 
 ## Simplify bot calling - get_final_response / stream_request
 
