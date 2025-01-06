@@ -120,7 +120,7 @@ def create_get_final_response(request: fp.QueryRequest) -> GetFinalResponseCalla
             
             # If it would up to me I would change these defaults
             on_error=on_error, # the errors being swallowed is a confusing
-            num_tries=0, # spent a lot of time debugging why my code was executed twice, only to find out it was because of the retries
+            num_tries=1, # spent a lot of time debugging why my code was executed twice, only to find out it was because of the retries
         )
     
     return get_final_response
