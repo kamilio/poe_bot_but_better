@@ -3,7 +3,7 @@ import sse_starlette
 from functools import wraps
 from typing import AsyncIterable, Callable, Union, Optional, Dict, Any
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
-from poe_bot_but_better.client import create_get_final_response, create_stream_request, create_post_message_attachment, make_sync, make_sync_generator
+from poe_bot_but_better.client import create_get_final_response, create_stream_request, create_post_message_attachment, make_sync, make_sync_generator, disabled_fn
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
 from poe_bot_but_better.types import PoeBotError
@@ -40,13 +40,11 @@ def poe_bot_but_better(cls):
             "request": request,
             "messages": request.query,
             "bot_name": self.bot_name,
-        }
 
-        context.update({
             "get_final_response": create_get_final_response(request),
             "stream_request": create_stream_request(request),
             "post_message_attachment": create_post_message_attachment(self, request),
-        })
+        }
         
         if self.dependency_injection_context_override:
             context.update(self.dependency_injection_context_override)
@@ -88,7 +86,12 @@ def poe_bot_but_better(cls):
         context = {
             "request": request,
             "setting": request,
-            "bot_name": self.bot_name
+            "bot_name": self.bot_name,
+
+            # hand holding
+            "get_final_response": disabled_fn("get_final_response", "is disabled in get_settings"),
+            "stream_request": disabled_fn("stream_request", "is disabled in get_settings"),
+            "post_message_attachment": disabled_fn("post_message_attachment", "is disabled in get_settings"),
         }
         
         if self.dependency_injection_context_override:
