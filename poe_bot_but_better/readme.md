@@ -21,16 +21,18 @@ Bonus: We could remove the functions get_response_with_context, that are not int
 
 ## Simplify bot calling - get_final_response / stream_request
 
-Currently, when passing the request as argument, it's not immediately obvious what is the context of the current messsage. What context is the bot exactly getting. 
+Currently, when passing the request as argument, it's not immediately obvious what is the context of the current query. What context is the bot exactly getting, where is it coming from.
 
 ### Allow messages (string) instead of request
 I propose to make the API flexible and support
 
 - `str` simplest cases for building the prompt as string, converts to user message.
+
+### Allow messages list of fp.Message
 - `messages: List[fp.Message]` using `request.query` as an argument. It unlocks simpler interface e.g. `[prompt] + messages`
 
 ### Bake-in the auth token
-Thanks to dependendency dependency this is easy to do. API users should not not worry about passing the token around. It's verbose and incraseas the cognitive load.
+Thanks to dependency injection, this is easy to do. API users should not not worry about passing the token around. It's verbose and incraseas the cognitive load.
 
 ## Make get_response more flexible
 Generators are advanced concept and it can be a bit intimidating to start with.
