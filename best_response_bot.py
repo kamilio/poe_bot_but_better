@@ -8,7 +8,7 @@ import json
 @dataclass
 class Config:
     decision_bot: str = "Claude-3-Haiku"
-    bots: list[str] = field(default_factory=lambda: ["Claude-3-Haiku", "GPT-3.5-Turbo"])
+    bots: list[str] = field(default_factory=lambda: ["Claude-3-Haiku", "GPT-3.5-Turbo", "Grok-beta", "GPT-4o", "Llama-3.1-405B", "Gemini-1.5-Pro"])
 
 def create_get_final_response_tuple(get_final_response):
     async def get_final_response_tuple(request, bot_name) -> tuple[str, str]:

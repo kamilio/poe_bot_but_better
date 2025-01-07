@@ -7,7 +7,7 @@ dummy_cache: dict = {}
 def create_cache():
     return dummy_cache
 
-GetFinalResponseCachedCallable = Callable[[str, str], Awaitable[str]]                                          
+GetFinalResponseCachedCallable = Callable[[str, str], Awaitable[str]]
 def create_cached_get_final_response(
         get_final_response, 
         cache: Annotated[dict, Depends(create_cache)]
@@ -21,7 +21,7 @@ def create_cached_get_final_response(
 
 @poe_bot_but_better
 class CachedBot: 
-    async def get_response( # switch to async method
+    async def get_response(
         self, 
         messages, 
         get_final_response_cached: Annotated[GetFinalResponseCachedCallable, Depends(create_cached_get_final_response)] 

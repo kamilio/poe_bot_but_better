@@ -47,7 +47,7 @@ async def test_sync_bot(bot_helper):
                 return
 
     response = await bot_helper.send_message(SyncBotStreamRequest, "Hello")
-    assert response == "Working" # only working because of the return after first chunk
+    assert response == "Working" # only first part because of the return after first chunk
 
 @pytest.mark.asyncio
 async def test_none_bot(bot_helper):
