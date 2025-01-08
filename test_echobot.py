@@ -1,6 +1,5 @@
 import pytest
 from echobot import EchoBot
-from poe_bot_but_better.test import bot_helper
         
 @pytest.mark.asyncio
 async def test_echo_bot_simple(bot_helper):

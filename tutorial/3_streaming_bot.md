@@ -30,7 +30,6 @@ Let's test it!
 ```python
 import pytest
 from turbo_allcapsbot import GPT35TurboAllCapsBot
-from poe_bot_but_better.test import bot_helper
         
 
 @pytest.mark.asyncio

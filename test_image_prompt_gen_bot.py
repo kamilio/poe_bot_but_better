@@ -2,7 +2,6 @@ import pytest
 from typing import AsyncGenerator, List
 import fastapi_poe as fp
 from image_prompt_gen_bot import ImagePromptGenBot
-from poe_bot_but_better.test import bot_helper
         
 
 @pytest.mark.asyncio

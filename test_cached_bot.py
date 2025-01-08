@@ -1,6 +1,5 @@
 from unittest.mock import AsyncMock
 import pytest
-from poe_bot_but_better.test import bot_helper
 from cached_bot import CachedBot, create_cached_get_final_response
 
 @pytest.mark.asyncio

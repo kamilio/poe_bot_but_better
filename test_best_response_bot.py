@@ -1,6 +1,6 @@
 import pytest
-from poe_bot_but_better.test import bot_helper, BotTestHelper
 from best_response_bot import BestResponseBot, Config
+from conftest import BotTestHelper
 
 @pytest.fixture
 def config():

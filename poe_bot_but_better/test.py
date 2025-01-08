@@ -161,14 +161,3 @@ class BotTestHelper:
         request = fp.SettingsRequest(version="1", type="settings")
         
         return await bot.get_settings(request)
-
-@pytest.fixture
-def bot_helper() -> BotTestHelper:
-    return BotTestHelper()
-
-def bot_helper_wrong_usage(*args, **kwargs):
-    raise PoeBotTestError("Use bot_helper fixture in your test: async def test_something(bot_helper): ...")
-
-bot_helper.mock_bot = bot_helper_wrong_usage  # type: ignore
-bot_helper.send_message = bot_helper_wrong_usage  # type: ignore
-bot_helper.get_settings = bot_helper_wrong_usage  # type: ignore

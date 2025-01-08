@@ -1,6 +1,5 @@
 import pytest
 import fastapi_poe as fp
-from poe_bot_but_better.test import bot_helper
 from poe_bot_but_better import poe_bot_but_better
 
 
