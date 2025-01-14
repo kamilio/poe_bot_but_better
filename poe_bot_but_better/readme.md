@@ -43,3 +43,6 @@ Using PartialResponse is verbose and error prone (the error message is not helpf
 
 ## Add test helpers
 Writing tests is hard, let's make it easier. 
+
+# Future ideas
+- Request / Response middlewares. Use case: logging plugin, append a link to logs to the response so user can see it and then clean it up before it gets to LLM. 
