@@ -135,6 +135,18 @@ def get_response(self, messages: list[fp.ProtocolMessage], stream_request: Calla
     ...
 ```
 
+## 5. Testing bots in production is lengthy and error prone
+Ideally users would be able to deploy bot into production and be relatively confident that they work. Most of the API users doesn't want to have different deployments, environments or bots for testing. And, it shouldn't be expected from them. 
+
+### Solution
+- Add unit test helpers and include them in the quick-start. Check unit tests in this project for examples.
+
+It should be easy to test following cases:
+- call bot with a message, multiple messages e.g. `response = await bot_helper.send_message(SuggestedRepliesBot, "Hello")`
+- mock LLM responses e.g. `mock = bot_helper.mock_bot("Claude-3.5-Sonnet", ["Hi, ", "I am a bot"])`
+- assert bot calls and bot responses e.g. `mock.assert_called_with_content("Hello")`
+
+
 ## Dependency Injection
 
 Dependency injection is a powerful pattern, adds ability to extend the core functionality without causing breaking changes or increasing the complexity of the code. It also provides easy way to build extensions that can be shared across bots. Building dependency injection in python is surprisingly simple but also existing libraries could be considered.
@@ -152,17 +164,3 @@ API Functions
 - stream_request
 - post_message_attachment
 - ... other Poe API functions
-
-## Testing bots in production is lengthy and error prone
-Ideally users would be able to deploy bot into production and be relatively confident that they works. Most of the API users doesn't want to have different deployments, environments or bots for testing. It shouldn't be expected from them. 
-
-### Solution (partial)
-- Add unit test helpers
-
-The quick-start should come with tests for each bot. 
-
-It should be easy to test following cases:
-- call bot with a message, multiple messages e.g. `response = await bot_helper.send_message(SuggestedRepliesBot, "Hello")`
-- mock LLM responses e.g. `mock = bot_helper.mock_bot("Claude-3.5-Sonnet", ["Hi, ", "I am a bot"])`
-- assert bot calls and bot responses e.g. `mock.assert_called_with_content("Hello")`
-
