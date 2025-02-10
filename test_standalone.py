@@ -1,6 +1,7 @@
 import pytest
 import fastapi_poe as fp
 from poe_bot_but_better import poe_bot_but_better
+from poe_bot_but_better.types import PoeBotError
 
 
 @pytest.mark.asyncio
@@ -33,9 +34,10 @@ async def test_sync_bot(bot_helper):
         def get_response(self, get_final_response, stream_request):
             response = get_final_response("Hello", "GPT-4")
             return response
-    bot_helper.mock_bot("GPT-4", ["Working", " well"])
-    response = await bot_helper.send_message(SyncBotGetFinalResponse, "Hello")
-    assert response == "Working well"
+            
+    with pytest.raises(PoeBotError, 
+                      match="get_final_response is disabled in sync get_response. Use async get_response instead."):
+        await bot_helper.send_message(SyncBotGetFinalResponse, "Hello")
 
     # sync generator
     @poe_bot_but_better
@@ -45,8 +47,9 @@ async def test_sync_bot(bot_helper):
                 yield part
                 return
 
-    response = await bot_helper.send_message(SyncBotStreamRequest, "Hello")
-    assert response == "Working" # only first part because of the return after first chunk
+    with pytest.raises(PoeBotError,
+                      match="stream_request is disabled in sync get_response. Use async get_response instead."):
+        await bot_helper.send_message(SyncBotStreamRequest, "Hello")
 
 @pytest.mark.asyncio
 async def test_none_bot(bot_helper):

@@ -1,9 +1,7 @@
-import asyncio
 import sse_starlette
-from functools import wraps
-from typing import AsyncIterable, Callable, Union, Optional, Dict, Any
+from typing import AsyncIterable, Union, Dict, Any
 from inspect import iscoroutinefunction, isgeneratorfunction, isasyncgenfunction
-from poe_bot_but_better.client import create_get_final_response, create_stream_request, create_post_message_attachment, make_sync, make_sync_generator, disabled_fn
+from poe_bot_but_better.client import create_get_final_response, create_stream_request, create_post_message_attachment, disabled_fn
 from .dependency_injection import solve_dependencies
 import fastapi_poe as fp
 from poe_bot_but_better.types import PoeBotError
@@ -60,18 +58,18 @@ def poe_bot_but_better(cls):
             yield normalize_response(result)
         elif isgeneratorfunction(original_get_response):
             context.update({
-                "get_final_response": make_sync(context["get_final_response"]),
-                "stream_request": make_sync_generator(context["stream_request"]),
-                "post_message_attachment": make_sync(context["post_message_attachment"]),
+                "get_final_response": disabled_fn("get_final_response", "is disabled in sync get_response. Use async get_response instead."),
+                "stream_request": disabled_fn("stream_request", "is disabled in sync get_response. Use async get_response instead."),
+                "post_message_attachment": disabled_fn("post_message_attachment", "is disabled in sync get_response. Use async get_response instead."),
             })
             dependencies = await solve_dependencies(original_get_response, context)
             for item in original_get_response(self, **dependencies):
                 yield normalize_response(item)
         else:
             context.update({
-                "get_final_response": make_sync(context["get_final_response"]),
-                "stream_request": make_sync_generator(context["stream_request"]),
-                "post_message_attachment": make_sync(context["post_message_attachment"]),
+                "get_final_response": disabled_fn("get_final_response", "is disabled in sync get_response. Use async get_response instead."),
+                "stream_request": disabled_fn("stream_request", "is disabled in sync get_response. Use async get_response instead."),
+                "post_message_attachment": disabled_fn("post_message_attachment", "is disabled in sync get_response. Use async get_response instead."),
             })
             dependencies = await solve_dependencies(original_get_response, context)
             result = original_get_response(self, **dependencies)
