@@ -54,7 +54,7 @@ Note: When writing the code using LLMs, I frequently encountered LLM assuming th
 Check for types and allow strings as well.
 
 ```python
-if isinstance(item, fp.FinalResponse):
+if isinstance(item, str):
     yield fp.PartialResponse(text=item)
 elif isinstance(item, fp.PartialResponse):
     yield item
