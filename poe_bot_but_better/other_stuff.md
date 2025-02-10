@@ -15,3 +15,7 @@
 - The chicken-egg problem deploy first or create bot first.
     - The deployment script would update the API URL of the bot. No need to update it via UI.
     - Do not require the bot name, isn't the access_key enough to identify the bot? It would be nice to be able to change the bot name without a deployment.
+
+
+# Future ideas
+- Request / Response middlewares. Use case: logging plugin, append a link to logs to the response so user can see it and then clean it up before it gets to LLM.
